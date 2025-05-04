@@ -1,8 +1,10 @@
-use std::{fs::File, io::{BufReader, Error, Read}};
+use std::io::{Cursor, Error, Read};
+
+use bytes::Bytes;
 
 use crate::traits::buf_reader_ext::ByteReader;
 
-impl ByteReader for BufReader<File> {
+impl ByteReader for Cursor<Bytes> {
     fn read_u8(&mut self) -> Result<u8, Error> {
         let mut byte_buffer = [0u8; 1];
         self.read_exact(&mut byte_buffer)?;

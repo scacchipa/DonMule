@@ -1,6 +1,8 @@
-use std::{collections::HashMap, fs::File, io::BufReader};
+use std::{collections::HashMap, fs::File, io::{BufReader, Cursor}};
 
-use crate::traits::buf_reader_ext::BufReaderExt;
+use bytes::Bytes;
+
+use crate::traits::buf_reader_ext::ByteReader;
 
 pub struct ServerEntry {
     pub ip: Option<[u8; 4]>,
@@ -144,56 +146,56 @@ impl ServerEntry {
         return string;
     }
 
-    pub fn load_entry(&mut self, buf_reader: &mut BufReader<File>) {
-        self.ip = Some(buf_reader.read_ip().unwrap());
-        self.port = Some(buf_reader.read_word_le().unwrap());
-        let tag_count = buf_reader.read_dword_le().unwrap();
+    pub fn load_entry(&mut self, cursor: &mut Cursor<Bytes>) {
+        self.ip = Some(cursor.read_ip().unwrap());
+        self.port = Some(cursor.read_u16_le().unwrap());
+        let tag_count = cursor.read_u32_le().unwrap();
 
         for _ in 0..tag_count {
-            self.load_tlv(buf_reader);
+            self.load_tlv(cursor);
         }
 
         println!("New server found: {}", self.to_string());
     }
 
-    fn load_tlv(&mut self, buf_reader: &mut BufReader<File>) {
-        let tag_type = buf_reader.read_byte().unwrap();
-        let tag_name_length = buf_reader.read_word_le().unwrap();
-        let tag_name = buf_reader.read_array(tag_name_length.into()).unwrap();
+    fn load_tlv(&mut self, cursor: &mut Cursor<Bytes>) {
+        let tag_type = cursor.read_u8().unwrap();
+        let tag_name_length = cursor.read_u16_le().unwrap();
+        let tag_name = cursor.read_array(tag_name_length.into()).unwrap();
 
         match tag_name[0] {
-            0x01u8 => self.name = ServerEntry::read_tlf_string(buf_reader),
-            0x0Bu8 => self.description = ServerEntry::read_tlf_string(buf_reader),
-            0x0Cu8 => self.ping = ServerEntry::read_u32(buf_reader),
-            0x0Du8 => self.fails = ServerEntry::read_u32(buf_reader),
-            0x0Eu8 => self.preferences = ServerEntry::read_u32(buf_reader),
-            0x0Fu8 => self.port = ServerEntry::read_u32(buf_reader).map(|p| p as u16),
-            0x10u8 => self.ip = ServerEntry::read_u32(buf_reader).map(|n| n.to_le_bytes()),
-            0x85u8 => self.dns = ServerEntry::read_tlf_string(buf_reader),
-            0x87u8 => self.max_users = ServerEntry::read_u32(buf_reader),
-            0x88u8 => self.soft_files = ServerEntry::read_u32(buf_reader),
-            0x89u8 => self.hard_files = ServerEntry::read_u32(buf_reader),
-            0x90u8 => self.last_ping = ServerEntry::read_u32(buf_reader),
+            0x01u8 => self.name = ServerEntry::read_tlf_string(cursor),
+            0x0Bu8 => self.description = ServerEntry::read_tlf_string(cursor),
+            0x0Cu8 => self.ping = ServerEntry::read_u32(cursor),
+            0x0Du8 => self.fails = ServerEntry::read_u32(cursor),
+            0x0Eu8 => self.preferences = ServerEntry::read_u32(cursor),
+            0x0Fu8 => self.port = ServerEntry::read_u32(cursor).map(|p| p as u16),
+            0x10u8 => self.ip = ServerEntry::read_u32(cursor).map(|n| n.to_le_bytes()),
+            0x85u8 => self.dns = ServerEntry::read_tlf_string(cursor),
+            0x87u8 => self.max_users = ServerEntry::read_u32(cursor),
+            0x88u8 => self.soft_files = ServerEntry::read_u32(cursor),
+            0x89u8 => self.hard_files = ServerEntry::read_u32(cursor),
+            0x90u8 => self.last_ping = ServerEntry::read_u32(cursor),
             0x91u8 => {
                 self.version = match tag_type {
-                    0x02 => ServerEntry::read_tlf_string(buf_reader),
-                    0x03 => ServerEntry::read_u32(buf_reader).map(|v| v.to_string()),
+                    0x02 => ServerEntry::read_tlf_string(cursor),
+                    0x03 => ServerEntry::read_u32(cursor).map(|v| v.to_string()),
                     _ => None,
                 }
             }
-            0x92u8 => self.udp_flag = ServerEntry::read_u32(buf_reader),
-            0x93u8 => self.auxiliary_port_list = ServerEntry::read_tlf_string(buf_reader),
-            0x94u8 => self.low_id_clients = ServerEntry::read_u32(buf_reader),
-            0x95u8 => self.udp_key = ServerEntry::read_u32(buf_reader),
-            0x96u8 => self.udp_key_ip = ServerEntry::read_u32(buf_reader),
-            0x97u8 => self.tcp_port_obfuscation = ServerEntry::read_u32(buf_reader),
-            0x98u8 => self.upd_port_obfuscation = ServerEntry::read_u32(buf_reader),
+            0x92u8 => self.udp_flag = ServerEntry::read_u32(cursor),
+            0x93u8 => self.auxiliary_port_list = ServerEntry::read_tlf_string(cursor),
+            0x94u8 => self.low_id_clients = ServerEntry::read_u32(cursor),
+            0x95u8 => self.udp_key = ServerEntry::read_u32(cursor),
+            0x96u8 => self.udp_key_ip = ServerEntry::read_u32(cursor),
+            0x97u8 => self.tcp_port_obfuscation = ServerEntry::read_u32(cursor),
+            0x98u8 => self.upd_port_obfuscation = ServerEntry::read_u32(cursor),
             _ => {
                 let key = String::from_utf8(tag_name).unwrap();
 
                 let value = match tag_type {
-                    0x02u8 => ServerEntry::read_tlf_string(buf_reader).unwrap(),
-                    0x03u8 => buf_reader.read_dword_le().unwrap().to_string(),
+                    0x02u8 => ServerEntry::read_tlf_string(cursor).unwrap(),
+                    0x03u8 => cursor.read_u32_le().unwrap().to_string(),
                     _ => format!("Unknown tag type: {:#04X}", tag_type),
                 };
 
@@ -210,13 +212,13 @@ impl ServerEntry {
         }
     }
 
-    fn read_tlf_string(buf_reader: &mut BufReader<File>) -> Option<String> {
-        let length = buf_reader.read_word_le().ok()?;
-        let vect = buf_reader.read_array(length.into()).ok()?;
+    fn read_tlf_string(cursor: &mut Cursor<Bytes>) -> Option<String> {
+        let length = cursor.read_u16_le().ok()?;
+        let vect = cursor.read_array(length.into()).ok()?;
         return String::from_utf8(vect).ok();
     }
 
-    fn read_u32(buf_reader: &mut BufReader<File>) -> Option<u32> {
-        return buf_reader.read_dword_le().ok();
+    fn read_u32(cursor: &mut Cursor<Bytes>) -> Option<u32> {
+        return cursor.read_u32_le().ok();
     }
 }
