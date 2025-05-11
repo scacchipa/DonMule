@@ -2,9 +2,25 @@ use std::io::{Cursor, Read, Write};
 
 use crate::traits::cursable::Cursable;
 
-struct String2ByteLength {
+#[derive(Debug)]
+pub struct String2ByteLength {
     length: u16,
-    value: String
+    value: Vec<u8>
+}
+
+impl String2ByteLength {
+    pub fn new(value: Vec<u8>) -> Self {
+        String2ByteLength { 
+            length: value.len() as u16,
+            value
+        }
+    }
+}
+
+impl PartialEq for String2ByteLength {
+    fn eq(&self, other: &Self) -> bool {
+        self.length == other.length && self.value == other.value
+    }
 }
 
 impl Cursable for String2ByteLength {
@@ -17,14 +33,13 @@ impl Cursable for String2ByteLength {
 
         let mut buffer = vec![0u8; usize::from(self.length)];
         cursor.read_exact(&mut buffer).expect("Failed to read String");
-        self.value = String::from_utf8(buffer).expect("Failed to convert buffer to String");
-
+        self.value = buffer;
     }
 
     fn read(&mut self, cursor: &mut Cursor<&mut [u8]>) {
 
         cursor.write(&self.length.to_le_bytes()).expect("Failed to write 2-byte length data");
-        cursor.write(&self.value.as_bytes()).expect("Failed to write String data");
+        cursor.write(&self.value).expect("Failed to write String data");
     }
 }
 
@@ -42,15 +57,13 @@ mod tests {
 
         let mut subject = String2ByteLength {
             length: txt.len() as u16,
-            value: txt,
+            value: txt.into_bytes(),
         };
 
         let mut buf = [0u8; 5];
         let mut cursor = Cursor::new(&mut buf[..]);
 
         subject.read(&mut cursor);
-
-        println!("probando {:02X?}", buf);
 
         assert_eq!(buf[0], 0x03u8);
         assert_eq!(buf[1], 0x00u8);
@@ -64,7 +77,7 @@ mod tests {
         
         let mut subject = String2ByteLength {
             length: 0u16,
-            value: String::from("")
+            value: vec!()
         };
 
         let mut buf = [0x04u8, 0x00u8, 0x65u8, 0x66u8, 0x67, 0x68];
@@ -72,11 +85,7 @@ mod tests {
 
         subject.write(&mut cursor);
 
-        // println!("{:04X?}", subject.length);
-        // println!("{:03X?}", subject.value);
-
         assert_eq!(subject.length, 0x0004u16);
-        assert_eq!(subject.value, String::from("efgh"));
+        assert_eq!(subject.value, "efgh".as_bytes());
     }
-
 }

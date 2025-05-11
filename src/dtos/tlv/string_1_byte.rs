@@ -2,21 +2,15 @@ use std::io::{Cursor, Read, Write};
 
 use crate::traits::cursable::Cursable;
 
-pub struct Integer1Byte {
-    pub value: u8
+pub struct String1Byte {
+    value: u8
 }
 
-impl Integer1Byte {
-    pub fn new(value: u8) -> Self {
-        Integer1Byte { value }
-    }
-}
-
-impl Cursable for Integer1Byte {
+impl Cursable for String1Byte {
 
     fn write(&mut self, cursor: &mut Cursor<&mut [u8]>) {
 
-        let mut buffer = [0u8; size_of::<Integer1Byte>()];
+        let mut buffer = [0u8; size_of::<String1Byte>()];
         cursor.read_exact(&mut buffer).expect("Failed to read Float4Byte data");
         self.value = u8::from_le_bytes(buffer);
     }
@@ -29,17 +23,16 @@ impl Cursable for Integer1Byte {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use std::io::Cursor;
 
-    use crate::{dtos::tlv::integer_1_byte::Integer1Byte, traits::cursable::Cursable};
+    use crate::{dtos::tlv::{integer_1_byte::Integer1Byte, string_1_byte::String1Byte}, traits::cursable::Cursable};
 
     #[test]
     fn test_integer_1_byte_should_read() {
 
-        let mut subject = Integer1Byte {
+        let mut subject = String1Byte {
             value: 140u8,
         };
 
@@ -59,8 +52,8 @@ mod tests {
     #[test]
     fn test_integer_1_byte_should_write() {
         
-        let mut subject = Integer1Byte {
-            value: 170,
+        let mut subject = String1Byte {
+            value: 170u8,
         };
 
         let mut buf = [170u8];

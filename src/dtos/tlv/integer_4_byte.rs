@@ -2,8 +2,21 @@ use std::io::{Cursor, Read, Write};
 
 use crate::traits::cursable::Cursable;
 
-struct Integer4Byte {
+#[derive(Debug)]
+pub struct Integer4Byte {
     value: u32
+}
+
+impl Integer4Byte {
+    pub fn new(value: u32) -> Self {
+        Integer4Byte { value }
+    }
+}
+
+impl PartialEq for Integer4Byte {    
+    fn eq(&self, other: &Self) -> bool {
+        self.value == other.value
+    }
 }
 
 impl Cursable for Integer4Byte {
