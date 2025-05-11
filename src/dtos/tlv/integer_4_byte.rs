@@ -1,4 +1,4 @@
-use std::io::{Cursor, Read, Write};
+use std::io::{Cursor, Error, Read, Write};
 
 use crate::traits::cursable::Cursable;
 
@@ -21,16 +21,18 @@ impl PartialEq for Integer4Byte {
 
 impl Cursable for Integer4Byte {
 
-    fn write(&mut self, cursor: &mut Cursor<&mut [u8]>) {
+    fn write(&mut self, cursor: &mut Cursor<&mut [u8]>) -> Result<usize, Error> {
 
         let mut buffer = [0u8; size_of::<u32>()];
-        cursor.read_exact(&mut buffer).expect("Failed to read Float4Byte data");
+        cursor.read_exact(&mut buffer);
         self.value = u32::from_le_bytes(buffer);
+
+        return Ok(buffer.len());
     }
 
-    fn read(&mut self, cursor: &mut Cursor<&mut [u8]>) {
+    fn read(&mut self, cursor: &mut Cursor<Vec<u8>>) -> Result<usize, Error> {
         
-        cursor.write(&self.value.to_le_bytes()).expect("Failed to write Float4Byte data");
+        return cursor.write(&self.value.to_le_bytes());
     }
 }
 
@@ -48,17 +50,15 @@ mod tests {
             value: 0xA9876543u32,
         };
 
-        let mut buf = [0u8; 4];
-        let mut cursor = Cursor::new(&mut buf[..]);
+        let mut cursor = Cursor::new(vec![0u8; 4]);
 
         subject.read(&mut cursor);
 
-        println!("probando {:02X?}", buf);
-
-        assert_eq!(buf[0], 0x43u8);
-        assert_eq!(buf[1], 0x65u8);
-        assert_eq!(buf[2], 0x87u8);
-        assert_eq!(buf[3], 0xa9u8);
+        let vect = cursor.into_inner();
+        assert_eq!(vect[0], 0x43u8);
+        assert_eq!(vect[1], 0x65u8);
+        assert_eq!(vect[2], 0x87u8);
+        assert_eq!(vect[3], 0xa9u8);
     }
 
     #[test]

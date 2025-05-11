@@ -1,4 +1,4 @@
-use std::io::{Cursor, Read, Write};
+use std::io::{Cursor, Error, Read, Write};
 
 use crate::traits::cursable::Cursable;
 
@@ -21,24 +21,26 @@ impl PartialEq for Float4Byte {
 
 impl Cursable for Float4Byte {
 
-    fn write(&mut self, cursor: &mut Cursor<&mut [u8]>) {
+    fn write(&mut self, cursor: &mut Cursor<&mut [u8]>) -> Result<usize, Error> {
 
         let mut buffer = [0u8; size_of::<f32>()];
-        cursor.read_exact(&mut buffer).expect("Failed to read Float4Byte data");
+        cursor.read_exact(&mut buffer)?;
         self.value = f32::from_le_bytes(buffer);
+
+        return Ok(buffer.len());
     }
 
-    fn read(&mut self, cursor: &mut Cursor<&mut [u8]>) {
+    fn read(&mut self, cursor: &mut Cursor<Vec<u8>>) -> Result<usize, Error> {
 
-        let buf = f32::to_le_bytes(self.value);
+        let size = cursor.write(&f32::to_le_bytes(self.value))?;
 
-        let _ = cursor.write(&buf);
+        return Ok(size);
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use std::io::Cursor;
+    use std::{io::Cursor, vec};
 
     use crate::{dtos::tlv::float_4_byte::Float4Byte, traits::cursable::Cursable};
 
@@ -50,17 +52,18 @@ mod tests {
             value: 123.456f32,
         };
 
-        let mut buf = [0u8; 10];
-        let mut cursor = Cursor::new(&mut buf[..]);
+        let vect = vec![0u8; 4];
+
+        let mut cursor = Cursor::new(vect);
 
         subject.read(&mut cursor);
 
-        println!("probando {:02X?}", buf);
+        let buffer = cursor.into_inner();
 
-        assert_eq!(buf[0], 0x79);
-        assert_eq!(buf[1], 0xE9);
-        assert_eq!(buf[2], 0xF6);
-        assert_eq!(buf[3], 0x42);
+        assert_eq!(buffer[0], 0x79);
+        assert_eq!(buffer[1], 0xE9);
+        assert_eq!(buffer[2], 0xF6);
+        assert_eq!(buffer[3], 0x42);
     }
 
     #[test]

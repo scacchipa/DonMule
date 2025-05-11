@@ -1,4 +1,4 @@
-use std::io::{Cursor, Read, Write};
+use std::io::{Cursor, Error, Read, Write};
 
 use crate::traits::cursable::Cursable;
 
@@ -14,18 +14,22 @@ impl Integer1Byte {
 
 impl Cursable for Integer1Byte {
 
-    fn write(&mut self, cursor: &mut Cursor<&mut [u8]>) {
+    fn write(&mut self, cursor: &mut Cursor<&mut [u8]>) -> Result<usize, Error>{
 
         let mut buffer = [0u8; size_of::<Integer1Byte>()];
-        cursor.read_exact(&mut buffer).expect("Failed to read Float4Byte data");
+        cursor.read_exact(&mut buffer)?;
         self.value = u8::from_le_bytes(buffer);
+
+        return Ok(buffer.len());
     }
 
-    fn read(&mut self, cursor: &mut Cursor<&mut [u8]>) {
+    fn read(&mut self, cursor: &mut Cursor<Vec<u8>>) -> Result<usize, Error> {
         
         let buf = u8::to_le_bytes(self.value);
 
-        let _ = cursor.write(&buf);
+        cursor.write(&buf)?;
+
+        return Ok(buf.len());
     }
 }
 
@@ -39,21 +43,15 @@ mod tests {
     #[test]
     fn test_integer_1_byte_should_read() {
 
-        let mut subject = Integer1Byte {
-            value: 140u8,
-        };
+        let mut subject = Integer1Byte { value: 140u8 };
 
-        let mut buf = [0u8; 1];
-        let mut cursor = Cursor::new(&mut buf[..]);
+        let mut cursor = Cursor::new( vec![0u8; 1]);
 
-        subject.read(&mut cursor);
+        subject.read(&mut cursor).unwrap();
 
-        println!("probando {:02?}", buf);
+        let vect = cursor.into_inner();
 
-        assert_eq!(buf[0], 140u8);
-        // assert_eq!(buf[1], 0xE9);
-        // assert_eq!(buf[2], 0xF6);
-        // assert_eq!(buf[3], 0x42);
+        assert_eq!(vect[0], 140u8);
     }
 
     #[test]

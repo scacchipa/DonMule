@@ -1,4 +1,4 @@
-use std::io::{Cursor, Read, Write};
+use std::io::{Cursor, Error, Read, Write};
 
 use crate::traits::cursable::Cursable;
 
@@ -25,21 +25,27 @@ impl PartialEq for String2ByteLength {
 
 impl Cursable for String2ByteLength {
 
-    fn write(&mut self, cursor: &mut Cursor<&mut [u8]>) {
+    fn write(&mut self, cursor: &mut Cursor<&mut [u8]>) -> Result<usize, Error> {
 
-        let mut buffer = [0u8; size_of::<u16>()];
-        cursor.read_exact(&mut buffer).expect("Failed to read 2-byte length");
-        self.length = u16::from_le_bytes(buffer);
+        let mut buffer1 = [0u8; size_of::<u16>()];
+        cursor.read_exact(&mut buffer1)?;
+        self.length = u16::from_le_bytes(buffer1);
+        let mut size = 2;
 
-        let mut buffer = vec![0u8; usize::from(self.length)];
-        cursor.read_exact(&mut buffer).expect("Failed to read String");
-        self.value = buffer;
+        let mut buffer2: Vec<u8> = vec![0u8; usize::from(self.length)];
+        cursor.read_exact(&mut buffer2)?;
+        self.value = buffer2;
+        size += self.value.len();
+
+        return Ok(size)
     }
 
-    fn read(&mut self, cursor: &mut Cursor<&mut [u8]>) {
+    fn read(&mut self, cursor: &mut Cursor<Vec<u8>>) -> Result<usize, Error> {
 
-        cursor.write(&self.length.to_le_bytes()).expect("Failed to write 2-byte length data");
-        cursor.write(&self.value).expect("Failed to write String data");
+        let mut size = cursor.write(&self.length.to_le_bytes())?;
+        size += cursor.write(&self.value)?;
+
+        return Ok(size);
     }
 }
 
@@ -60,16 +66,18 @@ mod tests {
             value: txt.into_bytes(),
         };
 
-        let mut buf = [0u8; 5];
-        let mut cursor = Cursor::new(&mut buf[..]);
+        
+        let mut cursor = Cursor::new(vec![0u8; subject.length as usize + 2]);
 
         subject.read(&mut cursor);
 
-        assert_eq!(buf[0], 0x03u8);
-        assert_eq!(buf[1], 0x00u8);
-        assert_eq!(buf[2], 0x61u8);
-        assert_eq!(buf[3], 0x62u8);
-        assert_eq!(buf[4], 0x63u8);
+
+        let vect = cursor.into_inner();
+        assert_eq!(vect[0], 0x03u8);
+        assert_eq!(vect[1], 0x00u8);
+        assert_eq!(vect[2], 0x61u8);
+        assert_eq!(vect[3], 0x62u8);
+        assert_eq!(vect[4], 0x63u8);
     }
 
     #[test]

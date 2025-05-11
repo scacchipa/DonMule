@@ -1,3 +1,5 @@
+use std::io::{Cursor, Error};
+
 use crate::traits::cursable::Cursable;
 
 use super::{float_4_byte::Float4Byte, integer_4_byte::Integer4Byte, string_2_byte_length::String2ByteLength};
@@ -21,19 +23,27 @@ impl PartialEq for TlvValue {
 }
 
 impl Cursable for TlvValue {
-    fn read(&mut self, cursor: &mut std::io::Cursor<&mut [u8]>) {
+    fn read(&mut self, cursor: &mut Cursor<Vec<u8>>) -> Result<usize, Error> {
+        let mut size: usize = 0;
+
         match self {
-            TlvValue::DescString(value) => value.read(cursor),
-            TlvValue::Integer4Byte(value) => value.read(cursor),
-            TlvValue::Float4Byte(value) => value.read(cursor),
+            TlvValue::DescString(value) => size += value.read(cursor)?,
+            TlvValue::Integer4Byte(value) => size += value.read(cursor)?,
+            TlvValue::Float4Byte(value) => size += value.read(cursor)?,
         }
+
+        return Ok(size);
     }
 
-    fn write(&mut self, cursor: &mut std::io::Cursor<&mut [u8]>) {
+    fn write(&mut self, cursor: &mut Cursor<&mut [u8]>) -> Result<usize, Error> {
+        let mut size: usize = 0;
+
         match self {
-            TlvValue::DescString(value) => value.write(cursor),
-            TlvValue::Float4Byte(value) => value.write(cursor),
-            TlvValue::Integer4Byte(value) => value.write(cursor),
+            TlvValue::DescString(value) => size += value.write(cursor)?,
+            TlvValue::Float4Byte(value) => size += value.write(cursor)?,
+            TlvValue::Integer4Byte(value) => size += value.write(cursor)?,
         }
+
+        return Ok(size);
     }
 }
