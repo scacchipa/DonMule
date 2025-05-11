@@ -29,7 +29,7 @@ struct LoginMsg {
 }
 
 impl Cursable for LoginMsg {
-    fn read(&mut self, cursor: &mut Cursor<Vec<u8>>) -> Result<usize, Error> {
+    fn write(&mut self, cursor: &mut Cursor<Vec<u8>>) -> Result<usize, Error> {
 
         let vect: Vec<u8> = Vec::new();
         let mut vec_cursor = Cursor::new(vect);
@@ -39,14 +39,14 @@ impl Cursable for LoginMsg {
         size += cursor.write(&self.client_port.to_le_bytes())?;
         size += cursor.write(&self.tag_count.to_le_bytes())?;
         for tag in self.tags.iter_mut() {
-            size += tag.read(cursor)?;
+            size += tag.write(cursor)?;
         };
 
     
         return Ok(size);
     }
 
-    fn write(&mut self, cursor: &mut std::io::Cursor<&mut [u8]>) -> Result<usize, Error> {
+    fn read(&mut self, cursor: &mut std::io::Cursor<&mut [u8]>) -> Result<usize, Error> {
         
         return Ok(0);
 

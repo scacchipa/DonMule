@@ -14,7 +14,7 @@ impl Integer1Byte {
 
 impl Cursable for Integer1Byte {
 
-    fn write(&mut self, cursor: &mut Cursor<&mut [u8]>) -> Result<usize, Error>{
+    fn read(&mut self, cursor: &mut Cursor<&mut [u8]>) -> Result<usize, Error>{
 
         let mut buffer = [0u8; size_of::<Integer1Byte>()];
         cursor.read_exact(&mut buffer)?;
@@ -23,7 +23,7 @@ impl Cursable for Integer1Byte {
         return Ok(buffer.len());
     }
 
-    fn read(&mut self, cursor: &mut Cursor<Vec<u8>>) -> Result<usize, Error> {
+    fn write(&mut self, cursor: &mut Cursor<Vec<u8>>) -> Result<usize, Error> {
         
         let buf = u8::to_le_bytes(self.value);
 
@@ -41,13 +41,13 @@ mod tests {
     use crate::{dtos::tlv::integer_1_byte::Integer1Byte, traits::cursable::Cursable};
 
     #[test]
-    fn test_integer_1_byte_should_read() {
+    fn test_integer_1_byte_should_write() {
 
         let mut subject = Integer1Byte { value: 140u8 };
 
         let mut cursor = Cursor::new( vec![0u8; 1]);
 
-        subject.read(&mut cursor).unwrap();
+        subject.write(&mut cursor).unwrap();
 
         let vect = cursor.into_inner();
 
@@ -55,7 +55,7 @@ mod tests {
     }
 
     #[test]
-    fn test_integer_1_byte_should_write() {
+    fn test_integer_1_byte_should_read() {
         
         let mut subject = Integer1Byte {
             value: 170,
@@ -64,7 +64,7 @@ mod tests {
         let mut buf = [170u8];
         let mut cursor = Cursor::new(&mut buf[..]);
 
-        subject.write(&mut cursor);
+        subject.read(&mut cursor);
 
         println!("{}", subject.value);
 

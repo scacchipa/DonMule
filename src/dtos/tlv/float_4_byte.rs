@@ -21,7 +21,7 @@ impl PartialEq for Float4Byte {
 
 impl Cursable for Float4Byte {
 
-    fn write(&mut self, cursor: &mut Cursor<&mut [u8]>) -> Result<usize, Error> {
+    fn read(&mut self, cursor: &mut Cursor<&mut [u8]>) -> Result<usize, Error> {
 
         let mut buffer = [0u8; size_of::<f32>()];
         cursor.read_exact(&mut buffer)?;
@@ -30,7 +30,7 @@ impl Cursable for Float4Byte {
         return Ok(buffer.len());
     }
 
-    fn read(&mut self, cursor: &mut Cursor<Vec<u8>>) -> Result<usize, Error> {
+    fn write(&mut self, cursor: &mut Cursor<Vec<u8>>) -> Result<usize, Error> {
 
         let size = cursor.write(&f32::to_le_bytes(self.value))?;
 
@@ -46,7 +46,7 @@ mod tests {
 
 
     #[test]
-    fn test_float_4_byte_should_read() {
+    fn test_float_4_byte_should_write() {
 
         let mut subject = Float4Byte {
             value: 123.456f32,
@@ -56,7 +56,7 @@ mod tests {
 
         let mut cursor = Cursor::new(vect);
 
-        subject.read(&mut cursor);
+        subject.write(&mut cursor);
 
         let buffer = cursor.into_inner();
 
@@ -67,7 +67,7 @@ mod tests {
     }
 
     #[test]
-    fn test_float_4_byte_should_write() {
+    fn test_float_4_byte_should_read() {
         
         let mut subject = Float4Byte {
             value: 0.0,
@@ -76,7 +76,7 @@ mod tests {
         let mut buf = [0x79u8, 0xE9u8, 0xF6, 0x42u8];
         let mut cursor = Cursor::new(&mut buf[..]);
 
-        subject.write(&mut cursor);
+        subject.read(&mut cursor);
 
         println!("{}", subject.value);
 

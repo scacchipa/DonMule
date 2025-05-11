@@ -25,7 +25,7 @@ impl PartialEq for String2ByteLength {
 
 impl Cursable for String2ByteLength {
 
-    fn write(&mut self, cursor: &mut Cursor<&mut [u8]>) -> Result<usize, Error> {
+    fn read(&mut self, cursor: &mut Cursor<&mut [u8]>) -> Result<usize, Error> {
 
         let mut buffer1 = [0u8; size_of::<u16>()];
         cursor.read_exact(&mut buffer1)?;
@@ -40,7 +40,7 @@ impl Cursable for String2ByteLength {
         return Ok(size)
     }
 
-    fn read(&mut self, cursor: &mut Cursor<Vec<u8>>) -> Result<usize, Error> {
+    fn write(&mut self, cursor: &mut Cursor<Vec<u8>>) -> Result<usize, Error> {
 
         let mut size = cursor.write(&self.length.to_le_bytes())?;
         size += cursor.write(&self.value)?;
@@ -57,7 +57,7 @@ mod tests {
 
 
     #[test]
-    fn test_string_2_byte_length_should_read() {
+    fn test_string_2_byte_length_should_write() {
 
         let txt = String::from("abc");
 
@@ -69,7 +69,7 @@ mod tests {
         
         let mut cursor = Cursor::new(vec![0u8; subject.length as usize + 2]);
 
-        subject.read(&mut cursor);
+        subject.write(&mut cursor);
 
 
         let vect = cursor.into_inner();
@@ -81,7 +81,7 @@ mod tests {
     }
 
     #[test]
-    fn test_string_2_byte_length_should_write() {
+    fn test_string_2_byte_length_should_read() {
         
         let mut subject = String2ByteLength {
             length: 0u16,
@@ -91,7 +91,7 @@ mod tests {
         let mut buf = [0x04u8, 0x00u8, 0x65u8, 0x66u8, 0x67, 0x68];
         let mut cursor = Cursor::new(&mut buf[..]);
 
-        subject.write(&mut cursor);
+        subject.read(&mut cursor);
 
         assert_eq!(subject.length, 0x0004u16);
         assert_eq!(subject.value, "efgh".as_bytes());

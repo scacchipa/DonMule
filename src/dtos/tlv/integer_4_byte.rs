@@ -21,7 +21,7 @@ impl PartialEq for Integer4Byte {
 
 impl Cursable for Integer4Byte {
 
-    fn write(&mut self, cursor: &mut Cursor<&mut [u8]>) -> Result<usize, Error> {
+    fn read(&mut self, cursor: &mut Cursor<&mut [u8]>) -> Result<usize, Error> {
 
         let mut buffer = [0u8; size_of::<u32>()];
         cursor.read_exact(&mut buffer);
@@ -30,7 +30,7 @@ impl Cursable for Integer4Byte {
         return Ok(buffer.len());
     }
 
-    fn read(&mut self, cursor: &mut Cursor<Vec<u8>>) -> Result<usize, Error> {
+    fn write(&mut self, cursor: &mut Cursor<Vec<u8>>) -> Result<usize, Error> {
         
         return cursor.write(&self.value.to_le_bytes());
     }
@@ -44,7 +44,7 @@ mod tests {
 
 
     #[test]
-    fn test_integer_4_byte_should_read() {
+    fn test_integer_4_byte_should_write() {
 
         let mut subject = Integer4Byte {
             value: 0xA9876543u32,
@@ -52,7 +52,7 @@ mod tests {
 
         let mut cursor = Cursor::new(vec![0u8; 4]);
 
-        subject.read(&mut cursor);
+        subject.write(&mut cursor);
 
         let vect = cursor.into_inner();
         assert_eq!(vect[0], 0x43u8);
@@ -62,7 +62,7 @@ mod tests {
     }
 
     #[test]
-    fn test_integer_4_byte_should_write() {
+    fn test_integer_4_byte_should_read() {
         
         let mut subject = Integer4Byte {
             value: 170,
@@ -71,7 +71,7 @@ mod tests {
         let mut buf = [0x21u8, 0x43u8, 0x65u8, 0x87u8];
         let mut cursor = Cursor::new(&mut buf[..]);
 
-        subject.write(&mut cursor);
+        subject.read(&mut cursor);
 
         println!("{}", subject.value);
 

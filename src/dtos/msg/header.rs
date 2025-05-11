@@ -16,16 +16,16 @@ pub struct Header {
 }
 
 impl Cursable for Header {
-    fn read(&mut self, cursor: &mut Cursor<Vec<u8>>) -> Result<usize, Error> {
-        let mut size = self.protocol.read(cursor)?;
-        size += self.msg_size.read(cursor)?;
+    fn write(&mut self, cursor: &mut Cursor<Vec<u8>>) -> Result<usize, Error> {
+        let mut size = self.protocol.write(cursor)?;
+        size += self.msg_size.write(cursor)?;
 
         return Ok(size);
     }
 
-    fn write(&mut self, cursor: &mut std::io::Cursor<&mut [u8]>) -> Result<usize, Error> {
-        let mut size = self.protocol.write(cursor)?;
-        size += self.msg_size.write(cursor)?;
+    fn read(&mut self, cursor: &mut std::io::Cursor<&mut [u8]>) -> Result<usize, Error> {
+        let mut size = self.protocol.read(cursor)?;
+        size += self.msg_size.read(cursor)?;
         return Ok(size);
     }
 }
