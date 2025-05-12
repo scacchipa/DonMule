@@ -5,9 +5,9 @@ use crate::traits::cursable::Cursable;
 use super::{float_4_byte::Float4Byte, integer_1_byte::Integer1Byte, integer_4_byte::Integer4Byte, string_2_byte_length::String2ByteLength, tlv_value::TlvValue};
 
 pub struct Tlv {
-    tlv_type: Integer1Byte,
-    tlv_name: String2ByteLength,
-    tlv_value: TlvValue,
+    pub tlv_type: Integer1Byte,
+    pub tlv_name: String2ByteLength,
+    pub tlv_value: TlvValue,
 }
 
 impl Tlv {
@@ -17,6 +17,14 @@ impl Tlv {
         tlv_value: TlvValue
     ) -> Self { 
         Tlv {tlv_type, tlv_name, tlv_value}
+    }
+
+    pub fn empty() -> Self {
+        Tlv { 
+            tlv_type: Integer1Byte::new(0),
+            tlv_name: String2ByteLength::new(b"".to_vec()),
+            tlv_value: TlvValue::Integer4Byte(Integer4Byte { value: 0 }) 
+        }
     }
 }
 

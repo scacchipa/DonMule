@@ -4,8 +4,8 @@ use crate::traits::cursable::Cursable;
 
 #[derive(Debug)]
 pub struct String2ByteLength {
-    length: u16,
-    value: Vec<u8>
+    pub length: u16,
+    pub value: Vec<u8>
 }
 
 impl String2ByteLength {

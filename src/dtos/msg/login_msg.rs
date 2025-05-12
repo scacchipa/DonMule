@@ -1,6 +1,14 @@
-use std::{io::{Cursor, Error, Write}, vec};
+use std::io::{Cursor, Error, ErrorKind, Read, Write};
 
-use crate::{dtos::{msg::header::Header, tlv::tlv::Tlv}, traits::cursable::Cursable};
+use crate::{
+    dtos::
+        tlv::{
+            integer_1_byte::Integer1Byte, integer_2_byte::Integer2Byte,
+            integer_4_byte::Integer4Byte, string_2_byte_length::String2ByteLength, tlv::Tlv, tlv_value::TlvValue,
+        }
+    ,
+    traits::cursable::Cursable,
+};
 
 /**
  * Protocol    Integer1Byte              Default: 0xE3
@@ -15,40 +23,79 @@ use crate::{dtos::{msg::header::Header, tlv::tlv::Tlv}, traits::cursable::Cursab
  * Name Tag    TLV (0x02; 0x01)           Default: NA. The user’s nickname (configurable in the software).
  * Version Tag TLV (0x03; 0x11)          Default: 0x3C. The eDonkey version supported by the client.
  * Port Tag    TLV (0x03; 0X0F)          Default: 4662. The TCP port used by the client.
- * Flags Tag 8 TLV (0x03; 0x20)          Default: 0x01. The tag is an integer tag and the tag name is 
+ * Flags Tag 8 TLV (0x03; 0x20)          Default: 0x01. The tag is an integer tag and the tag name is
  *                                         an integer of value 0x20
  */
 
+macro_rules! invalid_data_error {
+    ($msg: expr) => {
+        Error::new(ErrorKind::InvalidData, $msg)
+    };
+}
+
+macro_rules! extract_tlv_value {
+    ($tag: expr, $variant: path) => {
+        match $tag.tlv_value {
+            $variant(val) => val,
+            _ => return Err(invalid_data_error!("Wrong type in Tlv"))
+        }
+    };
+}
+
 struct LoginMsg {
-    packet_type: u8,
+    packet_type: Integer1Byte,
     user_hash: [u8; 16],
     client_ip: [u8; 4],
-    client_port: u16,
-    tag_count: u32,
-    tags: Vec<Tlv>
+    client_port: Integer2Byte,
+    name_tag: String2ByteLength,
+    version_tag: Integer4Byte,
+    port_tag: Integer4Byte,
+    flag_tag: Integer4Byte,
 }
 
 impl Cursable for LoginMsg {
     fn write(&mut self, cursor: &mut Cursor<Vec<u8>>) -> Result<usize, Error> {
-
-        let vect: Vec<u8> = Vec::new();
-        let mut vec_cursor = Cursor::new(vect);
-
-        let mut size = vec_cursor.write(&[self.packet_type])?;
+        let mut size = self.packet_type.write(cursor)?;
+        size += cursor.write(&self.user_hash)?;
         size += cursor.write(&self.client_ip)?;
-        size += cursor.write(&self.client_port.to_le_bytes())?;
-        size += cursor.write(&self.tag_count.to_le_bytes())?;
-        for tag in self.tags.iter_mut() {
-            size += tag.write(cursor)?;
-        };
+        size += self.client_port.write(cursor)?;
 
-    
+        let mut tag_count = Integer4Byte::new(2);
+        size += tag_count.write(cursor)?;
+        
+        size += self.name_tag.write(cursor)?;
+        size += self.version_tag.write(cursor)?;
+        size += self.port_tag.write(cursor)?;
+        size += self.flag_tag.write(cursor)?;
         return Ok(size);
     }
 
     fn read(&mut self, cursor: &mut std::io::Cursor<&mut [u8]>) -> Result<usize, Error> {
         
-        return Ok(0);
+        let mut size = self.packet_type.read(cursor)?;
+        size += cursor.read(&mut self.user_hash)?;
+        size += cursor.read(&mut self.client_ip)?;
+        size += self.client_port.read(cursor)?;
 
+        let mut tag_count = Integer4Byte::new(0);
+        size += tag_count.read(cursor)?;
+
+        for _ in 0..(tag_count.value) {
+
+            let mut tag = Tlv::empty();
+            size += tag.read(cursor)?;
+
+            match tag.tlv_name.value.as_slice() {
+                [0x01] => self.name_tag = extract_tlv_value!(tag, TlvValue::DescString),
+                [0x11] => self.version_tag = extract_tlv_value!(tag, TlvValue::Integer4Byte),
+                [0x0F] => self.port_tag = extract_tlv_value!(tag, TlvValue::Integer4Byte),
+                [0x20] => self.flag_tag = extract_tlv_value!(tag, TlvValue::Integer4Byte),
+                _ => return Err(Error::new(ErrorKind::InvalidData, "Wrong type in Tlv"))
+            }
+        }
+
+        return Ok(size);
     }
 }
+
+

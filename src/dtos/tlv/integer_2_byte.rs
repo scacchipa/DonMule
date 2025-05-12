@@ -3,29 +3,29 @@ use std::io::{Cursor, Error, Read, Write};
 use crate::traits::cursable::Cursable;
 
 #[derive(Debug)]
-pub struct Integer4Byte {
-    pub value: u32
+pub struct Integer2Byte {
+    value: u16
 }
 
-impl Integer4Byte {
-    pub fn new(value: u32) -> Self {
-        Integer4Byte { value }
+impl Integer2Byte {
+    pub fn new(value: u16) -> Self {
+        Integer2Byte { value }
     }
 }
 
-impl PartialEq for Integer4Byte {    
+impl PartialEq for Integer2Byte {    
     fn eq(&self, other: &Self) -> bool {
         self.value == other.value
     }
 }
 
-impl Cursable for Integer4Byte {
+impl Cursable for Integer2Byte {
 
     fn read(&mut self, cursor: &mut Cursor<&mut [u8]>) -> Result<usize, Error> {
 
-        let mut buffer = [0u8; size_of::<u32>()];
+        let mut buffer = [0u8; size_of::<u16>()];
         cursor.read_exact(&mut buffer);
-        self.value = u32::from_le_bytes(buffer);
+        self.value = u16::from_le_bytes(buffer);
 
         return Ok(buffer.len());
     }
@@ -40,14 +40,14 @@ impl Cursable for Integer4Byte {
 mod tests {
     use std::io::Cursor;
 
-    use crate::{dtos::tlv::integer_4_byte::Integer4Byte, traits::cursable::Cursable};
+    use crate::{dtos::tlv::{integer_2_byte::Integer2Byte, integer_4_byte::Integer4Byte}, traits::cursable::Cursable};
 
 
     #[test]
-    fn test_integer_4_byte_should_write() {
+    fn test_integer_2_byte_should_write() {
 
-        let mut subject = Integer4Byte {
-            value: 0xA9876543u32,
+        let mut subject = Integer2Byte {
+            value: 0xA987u16,
         };
 
         let mut cursor = Cursor::new(vec![0u8; 4]);
@@ -55,27 +55,25 @@ mod tests {
         subject.write(&mut cursor);
 
         let vect = cursor.into_inner();
-        assert_eq!(vect[0], 0x43u8);
-        assert_eq!(vect[1], 0x65u8);
-        assert_eq!(vect[2], 0x87u8);
-        assert_eq!(vect[3], 0xa9u8);
+        assert_eq!(vect[0], 0x87u8);
+        assert_eq!(vect[1], 0xa9u8);
     }
 
     #[test]
-    fn test_integer_4_byte_should_read() {
+    fn test_integer_2_byte_should_read() {
         
-        let mut subject = Integer4Byte {
+        let mut subject = Integer2Byte {
             value: 170,
         };
 
-        let mut buf = [0x21u8, 0x43u8, 0x65u8, 0x87u8];
+        let mut buf = [0x21u8, 0x43u8];
         let mut cursor = Cursor::new(&mut buf[..]);
 
         subject.read(&mut cursor);
 
         println!("{}", subject.value);
 
-        assert_eq!(subject.value, 0x87654321u32);
+        assert_eq!(subject.value, 0x4321u16);
     }
 
 }
