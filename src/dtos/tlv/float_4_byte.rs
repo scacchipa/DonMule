@@ -56,10 +56,11 @@ mod tests {
 
         let mut cursor = Cursor::new(vect);
 
-        subject.write(&mut cursor);
+        let size = subject.write(&mut cursor).unwrap();
 
         let buffer = cursor.into_inner();
 
+        assert_eq!(size, 4);
         assert_eq!(buffer[0], 0x79);
         assert_eq!(buffer[1], 0xE9);
         assert_eq!(buffer[2], 0xF6);
@@ -76,10 +77,11 @@ mod tests {
         let mut buf = [0x79u8, 0xE9u8, 0xF6, 0x42u8];
         let mut cursor = Cursor::new(&mut buf[..]);
 
-        subject.read(&mut cursor);
+        let size = subject.read(&mut cursor).unwrap();
 
         println!("{}", subject.value);
 
+        assert_eq!(size, 4);
         assert_eq!(subject.value, 123.456f32);
     }
 

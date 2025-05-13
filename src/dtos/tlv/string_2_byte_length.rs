@@ -66,13 +66,13 @@ mod tests {
             value: txt.into_bytes(),
         };
 
-        
         let mut cursor = Cursor::new(vec![0u8; subject.length as usize + 2]);
 
-        subject.write(&mut cursor);
+        let size = subject.write(&mut cursor).unwrap();
 
 
         let vect = cursor.into_inner();
+        assert_eq!(size, 5);
         assert_eq!(vect[0], 0x03u8);
         assert_eq!(vect[1], 0x00u8);
         assert_eq!(vect[2], 0x61u8);
@@ -91,8 +91,9 @@ mod tests {
         let mut buf = [0x04u8, 0x00u8, 0x65u8, 0x66u8, 0x67, 0x68];
         let mut cursor = Cursor::new(&mut buf[..]);
 
-        subject.read(&mut cursor);
+        let size = subject.read(&mut cursor).unwrap();
 
+        assert_eq!(size, 6);
         assert_eq!(subject.length, 0x0004u16);
         assert_eq!(subject.value, "efgh".as_bytes());
     }

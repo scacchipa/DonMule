@@ -40,9 +40,10 @@ mod tests {
 
         let mut cursor = Cursor::new(vec![0u8, 1]);
 
-        subject.write(&mut cursor);
+        let size = subject.write(&mut cursor).unwrap();
 
         let buf = cursor.into_inner();
+        assert_eq!(size, 1);
         assert_eq!(buf[0], 140u8);
     }
 
@@ -56,10 +57,10 @@ mod tests {
         let mut buf = [170u8];
         let mut cursor = Cursor::new(&mut buf[..]);
 
-        subject.read(&mut cursor);
+        let size = subject.read(&mut cursor).unwrap();
 
         println!("{}", subject.value);
-
+        assert_eq!(size, 1);
         assert_eq!(subject.value, 170u8);
     }
 }

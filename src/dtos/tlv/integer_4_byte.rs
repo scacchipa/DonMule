@@ -24,7 +24,7 @@ impl Cursable for Integer4Byte {
     fn read(&mut self, cursor: &mut Cursor<&mut [u8]>) -> Result<usize, Error> {
 
         let mut buffer = [0u8; size_of::<u32>()];
-        cursor.read_exact(&mut buffer);
+        cursor.read_exact(&mut buffer)?;
         self.value = u32::from_le_bytes(buffer);
 
         return Ok(buffer.len());
@@ -52,9 +52,10 @@ mod tests {
 
         let mut cursor = Cursor::new(vec![0u8; 4]);
 
-        subject.write(&mut cursor);
+        let size = subject.write(&mut cursor).unwrap();
 
         let vect = cursor.into_inner();
+        assert_eq!(size, 4);
         assert_eq!(vect[0], 0x43u8);
         assert_eq!(vect[1], 0x65u8);
         assert_eq!(vect[2], 0x87u8);

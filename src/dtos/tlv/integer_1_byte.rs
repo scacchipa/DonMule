@@ -64,10 +64,11 @@ mod tests {
         let mut buf = [170u8];
         let mut cursor = Cursor::new(&mut buf[..]);
 
-        subject.read(&mut cursor);
+        let size = subject.read(&mut cursor).unwrap();
 
         println!("{}", subject.value);
 
+        assert_eq!(size, 1);
         assert_eq!(subject.value, 170u8);
     }
 }

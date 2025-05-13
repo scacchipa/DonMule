@@ -24,7 +24,7 @@ impl Cursable for Integer2Byte {
     fn read(&mut self, cursor: &mut Cursor<&mut [u8]>) -> Result<usize, Error> {
 
         let mut buffer = [0u8; size_of::<u16>()];
-        cursor.read_exact(&mut buffer);
+        cursor.read_exact(&mut buffer)?;
         self.value = u16::from_le_bytes(buffer);
 
         return Ok(buffer.len());
@@ -40,7 +40,7 @@ impl Cursable for Integer2Byte {
 mod tests {
     use std::io::Cursor;
 
-    use crate::{dtos::tlv::{integer_2_byte::Integer2Byte, integer_4_byte::Integer4Byte}, traits::cursable::Cursable};
+    use crate::{dtos::tlv::integer_2_byte::Integer2Byte, traits::cursable::Cursable};
 
 
     #[test]
@@ -52,9 +52,10 @@ mod tests {
 
         let mut cursor = Cursor::new(vec![0u8; 4]);
 
-        subject.write(&mut cursor);
+       let size = subject.write(&mut cursor).unwrap();
 
         let vect = cursor.into_inner();
+        assert_eq!(size, 2);
         assert_eq!(vect[0], 0x87u8);
         assert_eq!(vect[1], 0xa9u8);
     }
@@ -69,10 +70,11 @@ mod tests {
         let mut buf = [0x21u8, 0x43u8];
         let mut cursor = Cursor::new(&mut buf[..]);
 
-        subject.read(&mut cursor);
+        let size = subject.read(&mut cursor).unwrap();
 
         println!("{}", subject.value);
 
+        assert_eq!(size, 2);
         assert_eq!(subject.value, 0x4321u16);
     }
 
