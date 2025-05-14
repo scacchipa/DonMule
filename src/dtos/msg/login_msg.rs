@@ -42,15 +42,15 @@ macro_rules! extract_tlv_value {
     };
 }
 
-struct LoginMsg {
-    packet_type: Integer1Byte,
-    user_hash: [u8; 16],
-    client_ip: [u8; 4],
-    client_port: Integer2Byte,
-    name_tag: String2ByteLength,
-    version_tag: Integer4Byte,
-    port_tag: Integer4Byte,
-    flag_tag: Integer4Byte,
+pub struct LoginMsg {
+    pub packet_type: Integer1Byte,
+    pub user_hash: [u8; 16],
+    pub client_ip: [u8; 4],
+    pub client_port: Integer2Byte,
+    pub name_tag: String2ByteLength,
+    pub version_tag: Integer4Byte,
+    pub port_tag: Integer4Byte,
+    pub flag_tag: Integer4Byte,
 }
 
 impl Cursable for LoginMsg {
@@ -95,6 +95,18 @@ impl Cursable for LoginMsg {
         }
 
         return Ok(size);
+    }
+
+    fn len(&self) -> usize {
+        return 
+            self.packet_type.len() +
+            self.user_hash.len() +
+            self.client_ip.len() +
+            self.client_port.len() +
+            self.name_tag.len() +
+            self.version_tag.len() +
+            self.port_tag.len() +
+            self.flag_tag.len()
     }
 }
 

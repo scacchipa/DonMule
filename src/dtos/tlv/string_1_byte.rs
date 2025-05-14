@@ -23,6 +23,10 @@ impl Cursable for String1Byte {
 
         return cursor.write(&buf);
     }
+
+    fn len(&self) -> usize {
+        return 1
+    }
 }
 
 #[cfg(test)]

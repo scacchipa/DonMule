@@ -36,6 +36,10 @@ impl Cursable for Float4Byte {
 
         return Ok(size);
     }
+
+    fn len(&self) -> usize {
+        return 4;
+    }
 }
 
 #[cfg(test)]

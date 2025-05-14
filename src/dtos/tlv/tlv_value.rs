@@ -46,4 +46,12 @@ impl Cursable for TlvValue {
 
         return Ok(size);
     }
+
+    fn len(&self) -> usize {
+        return match self {
+            Self::DescString(value) => value.len(),
+            Self::Integer4Byte(value) => value.len(),
+            Self::Float4Byte(value) => value.len(),
+        }
+    }
 }

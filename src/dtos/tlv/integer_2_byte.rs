@@ -4,7 +4,7 @@ use crate::traits::cursable::Cursable;
 
 #[derive(Debug)]
 pub struct Integer2Byte {
-    value: u16
+    pub value: u16
 }
 
 impl Integer2Byte {
@@ -33,6 +33,10 @@ impl Cursable for Integer2Byte {
     fn write(&mut self, cursor: &mut Cursor<Vec<u8>>) -> Result<usize, Error> {
         
         return cursor.write(&self.value.to_le_bytes());
+    }
+
+    fn len(&self) -> usize {
+        return 2;
     }
 }
 

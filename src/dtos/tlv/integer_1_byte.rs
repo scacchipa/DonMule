@@ -3,7 +3,7 @@ use std::io::{Cursor, Error, Read, Write};
 use crate::traits::cursable::Cursable;
 
 pub struct Integer1Byte {
-    pub value: u8
+    pub value: u8,
 }
 
 impl Integer1Byte {
@@ -30,6 +30,10 @@ impl Cursable for Integer1Byte {
         cursor.write(&buf)?;
 
         return Ok(buf.len());
+    }
+
+    fn len(&self) -> usize {
+        return  1;
     }
 }
 

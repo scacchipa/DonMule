@@ -11,9 +11,11 @@ use crate::{dtos::tlv::{integer_1_byte::Integer1Byte, integer_4_byte::Integer4By
  * 3. type - A single byte type - a unique message ID.
  */
 pub struct Header {
-    protocol: Integer1Byte,
-    msg_size: Integer4Byte
+    pub protocol: Integer1Byte,
+    pub msg_size: Integer4Byte
 }
+
+
 
 impl Cursable for Header {
     fn write(&mut self, cursor: &mut Cursor<Vec<u8>>) -> Result<usize, Error> {
@@ -27,5 +29,9 @@ impl Cursable for Header {
         let mut size = self.protocol.read(cursor)?;
         size += self.msg_size.read(cursor)?;
         return Ok(size);
+    }
+
+    fn len(&self) -> usize {
+        return self.protocol.len() + self.msg_size.len();
     }
 }

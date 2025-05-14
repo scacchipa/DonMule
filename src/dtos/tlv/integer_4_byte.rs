@@ -34,6 +34,10 @@ impl Cursable for Integer4Byte {
         
         return cursor.write(&self.value.to_le_bytes());
     }
+
+    fn len(&self) -> usize {
+        return 4;
+    }
 }
 
 #[cfg(test)]
@@ -78,5 +82,4 @@ mod tests {
 
         assert_eq!(subject.value, 0x87654321u32);
     }
-
 }

@@ -1,4 +1,4 @@
-use std::io::{Cursor, Error, Read, Write};
+use std::{arch::aarch64::vaba_s16, io::{Cursor, Error, Read, Write}};
 
 use crate::traits::cursable::Cursable;
 
@@ -46,6 +46,10 @@ impl Cursable for String2ByteLength {
         size += cursor.write(&self.value)?;
 
         return Ok(size);
+    }
+
+    fn len(&self) -> usize {
+        return 2 + self.value.len()
     }
 }
 

@@ -52,6 +52,10 @@ impl Cursable for Tlv {
 
         return Ok(size);
     }
+
+    fn len(&self) -> usize {
+        return self.tlv_type.len() + self.tlv_name.len() + self.tlv_value.len()
+    }
 }
 
 mod tests {
